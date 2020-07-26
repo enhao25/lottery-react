@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Button, Form, Input, Message } from 'semantic-ui-react';
 import './App.css';
 
 import web3 from "./web3";
@@ -11,12 +12,12 @@ class App extends Component {
     players: [],
     balance: '',
     value: '',
-    message: ''
+    message: '',
+    errorMsg: '',
+    loading: false
   }
 
   async componentDidMount() {
-    // Enable ethereum on the webapge
-    window.ethereum.enable();
     const manager = await lottery.methods.manager().call();
     this.updatePlayernBalance();
 
@@ -25,17 +26,23 @@ class App extends Component {
 
   onSubmit = async (event) => {
     event.preventDefault();
+    // Enable ethereum on the webapge
+    await window.ethereum.enable();
 
     const accounts = await web3.eth.getAccounts();
 
-    this.setState({ message: "Waiting on transaction success..." })
+    this.setState({ message: "Waiting on transaction success...", loading: true, errorMsg: "" })
     
-    await lottery.methods.enter().send({
-      from: accounts[0],
-      value: web3.utils.toWei(this.state.value, 'ether')
-    });
-
-    this.setState({ message: 'You have been entered!' })
+    try {
+      await lottery.methods.enter().send({
+        from: accounts[0],
+        value: web3.utils.toWei(this.state.value, 'ether')
+      });
+    } catch(err) {
+      this.setState({ errorMsg: err.message })
+    }
+    
+    this.setState({ message: 'You have been entered!', loading: false })
     this.updatePlayernBalance();
   }
 
@@ -63,28 +70,30 @@ class App extends Component {
     const { manager, players, balance, value, message } = this.state
     return (
       <div className="App">
-        <h2>Lottery Contract</h2>
+        <h1>Lottery Contract</h1>
         <p>This Contract is managed by {manager}</p>
         <p>There are currently {players.length} people entered, competiting to win {web3.utils.fromWei(balance, 'ether')} ether!</p>
 
         <hr />
 
-        <form onSubmit={this.onSubmit}>
-          <h4>Want to try your luck?</h4>
+        <Form onSubmit={this.onSubmit} error={!!this.state.errorMsg}>
+          <h3>Want to try your luck?</h3>
           <div>
-            <label>Amount of ether to enter</label>
-            <input 
+            <label>Amount of ether to enter </label> <br />
+            <Input 
               value={value}
               onChange={event => this.setState({ value: event.target.value })}
+              placeholder="in ether"
             />
           </div>
-          <button>Enter</button>
-        </form>
+          <Button loading={this.state.loading} primary style={{marginTop: "10px"}}>Enter</Button>
+          <Message error header="Oops!" content={this.state.errorMsg} />
+        </Form>
 
         <hr />
 
-        <h4>Ready to pick a winner?</h4>
-        <button onClick={this.onClick} >Pick a winner!</button>
+        <h3>Ready to pick a winner?</h3>
+        <Button onClick={this.onClick} basic color='blue'>Pick a winner!</Button>
 
         <hr />
 

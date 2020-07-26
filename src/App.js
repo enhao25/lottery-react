@@ -14,7 +14,9 @@ class App extends Component {
     value: '',
     message: '',
     errorMsg: '',
-    loading: false
+    loading: false,
+    errorMsgChooseWin: '',
+    loadingChooseWin: false
   }
 
   async componentDidMount() {
@@ -38,24 +40,32 @@ class App extends Component {
         from: accounts[0],
         value: web3.utils.toWei(this.state.value, 'ether')
       });
+      this.setState({ message: 'You have been entered!' })
     } catch(err) {
-      this.setState({ errorMsg: err.message })
+      this.setState({ message:"", errorMsg: err.message })
     }
     
-    this.setState({ message: 'You have been entered!', loading: false })
+    this.setState({ loading: false })
     this.updatePlayernBalance();
   }
 
   onClick = async (event) => {
     const accounts = await web3.eth.getAccounts();
 
-    this.setState({ message: "Waiting on transaction success..." })
+    this.setState({ message: "Waiting on transaction success...", loadingChooseWin: true })
     
-    await lottery.methods.pickWinner().send({
-      from: accounts[0]
-    });
+    try {
+      await lottery.methods.pickWinner().send({
+        from: accounts[0]
+      });
+      this.setState({ message: 'A winner has been picked' })
 
-    this.setState({ message: 'A winner has been picked' })
+    } catch (err) {
+      this.setState({ message:"", errorMsgChooseWin: err.message })
+    }
+
+    this.setState({ loadingChooseWin: false });
+    
     this.updatePlayernBalance();
   }
 
@@ -91,10 +101,13 @@ class App extends Component {
         </Form>
 
         <hr />
-
-        <h3>Ready to pick a winner?</h3>
-        <Button onClick={this.onClick} basic color='blue'>Pick a winner!</Button>
-
+        <Form error={!!this.state.errorMsgChooseWin}>
+          <h3>Ready to pick a winner?</h3>
+          <Button loading={this.state.loadingChooseWin} onClick={this.onClick} basic color='blue'>
+            Pick a winner!
+          </Button>
+          <Message error header="Oops!" content={this.state.errorMsgChooseWin} />
+        </Form>
         <hr />
 
         <h1>{message}</h1>

@@ -52,13 +52,15 @@ class App extends Component {
   onClick = async (event) => {
     const accounts = await web3.eth.getAccounts();
 
-    this.setState({ message: "Waiting on transaction success...", loadingChooseWin: true })
+    this.setState({ message: "Waiting on transaction success...", loadingChooseWin: true, errorMsgChooseWin: "" })
     
     try {
       await lottery.methods.pickWinner().send({
         from: accounts[0]
       });
-      this.setState({ message: 'A winner has been picked' })
+      const winner = await lottery.methods.currentWinner().call();
+      console.log(lottery.methods);
+      this.setState({ message: `The winner is ${winner}.` })
 
     } catch (err) {
       this.setState({ message:"", errorMsgChooseWin: err.message })

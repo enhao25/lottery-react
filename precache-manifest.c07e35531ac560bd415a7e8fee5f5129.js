@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "2b7dc030f6dcf12ddebbca33d6b65fd1",
+    "revision": "2604a73a7fa26b99b787ec7ba848c684",
     "url": "/lottery-react/index.html"
   },
   {
